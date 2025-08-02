@@ -151,6 +151,90 @@ class VectorStore:
             self.logger.error(f"Error performing similarity search: {str(e)}")
             raise
     
+    def band_specific_search(self, query: str, band: str, n_results: int = 10, 
+                           document_types: List[str] = None, min_similarity: float = 0.0) -> List[Dict[str, Any]]:
+        """Enhanced search that prioritizes content specific to a particular band"""
+        try:
+            
+            initial_results = self.similarity_search(
+                query=query,
+                n_results=n_results * 2,  
+                document_types=document_types,
+                min_similarity=min_similarity
+            )
+            
+            band_specific = []
+            general_content = []
+            
+            for result in initial_results:
+                content = result['content'].upper()
+                
+                if band.upper() in content:
+                    band_context_score = self._calculate_band_context_score(result['content'], band)
+                    result['band_context_score'] = band_context_score
+                    
+                    if band_context_score > 0.3:  
+                        result['similarity'] += 0.4
+                        result['band_specific'] = True
+                        result['priority'] = 'high'
+                        band_specific.append(result)
+                    else:
+                        result['similarity'] += 0.2
+                        result['band_specific'] = True  
+                        result['priority'] = 'medium'
+                        band_specific.append(result)
+                else:
+                    result['band_specific'] = False
+                    result['priority'] = 'low'
+                    general_content.append(result)
+            
+            final_results = band_specific + general_content
+            
+            final_results.sort(key=lambda x: x['similarity'], reverse=True)
+            
+            return final_results[:n_results]
+            
+        except Exception as e:
+            self.logger.error(f"Error performing band-specific search: {str(e)}")
+            return self.similarity_search(query, n_results, document_types, min_similarity)
+    
+    def _calculate_band_context_score(self, content: str, band: str) -> float:
+        """Calculate how contextually relevant content is to a specific band"""
+        content_lower = content.lower()
+        band_lower = band.lower()
+        score = 0.0
+        
+        band_patterns = [
+            f"{band_lower} employees",
+            f"{band_lower} band",
+            f"for {band_lower}",
+            f"{band_lower} level",
+            f"{band_lower} staff",
+            f"{band_lower}:",
+            f"level {band_lower}",
+            f"band {band_lower}"
+        ]
+        
+        for pattern in band_patterns:
+            if pattern in content_lower:
+                score += 0.3
+        
+        table_patterns = [
+            "matrix", "table", "entitlement", "policy summary"
+        ]
+        
+        for pattern in table_patterns:
+            if pattern in content_lower and band_lower in content_lower:
+                score += 0.1
+        
+        other_bands = [f"l{i}" for i in range(1, 6) if f"l{i}" != band_lower]
+        other_band_mentions = sum(1 for band_ref in other_bands if band_ref in content_lower)
+        
+        if other_band_mentions > 2:
+            score *= 0.5  
+        
+        return min(score, 1.0)  
+    
     def get_documents_by_type(self, document_type: str, limit: int = None) -> List[Dict[str, Any]]:
         
         try:
@@ -181,28 +265,30 @@ class VectorStore:
             salary_band = employee.get('salary_band', 'L1')
             position = employee.get('position', '').lower()
             
-            # Updated queries to match actual document content
+            # Enhanced queries using the improved band-specific search
             policy_queries = {
-                'leave_policy': f"leave entitlement {salary_band} earned leave sick leave casual leave",
-                'travel_policy': f"travel allowance per diem {salary_band} flight hotel reimbursement", 
-                'work_arrangements': f"work from home WFH WFO {salary_band} remote work flexible",
-                'infrastructure_support': f"WFH setup grant internet stipend laptop device policy"
+                'leave_policy': f"leave entitlement {salary_band} earned leave sick leave casual leave matrix",
+                'travel_policy': f"travel allowance per diem {salary_band} flight hotel reimbursement matrix", 
+                'work_arrangements': f"work from home WFH WFO {salary_band} remote work flexible eligibility",
+                'infrastructure_support': f"WFH setup grant internet stipend laptop device policy {salary_band}"
             }
             
             relevant_policies = {}
             
             for policy_type, query in policy_queries.items():
                 
-                results = self.similarity_search(
+                # Use the enhanced band-specific search for better results
+                results = self.band_specific_search(
                     query=query,
-                    n_results=3,
+                    band=salary_band,
+                    n_results=4,  # Get more results for offer letters
                     document_types=['hr_policy', 'travel_policy'],
                     min_similarity=0.05
                 )
                 
                 if results:
                     relevant_policies[policy_type] = results
-                    self.logger.info(f"Found {len(results)} relevant {policy_type} documents")
+                    self.logger.info(f"Found {len(results)} relevant {policy_type} documents for {salary_band}")
             
             return relevant_policies
             

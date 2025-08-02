@@ -144,8 +144,13 @@ You are an expert HR professional generating a personalized job offer letter.
 - Joining Date: {employee['joining_date']}
 - Employee ID: {employee['employee_id']}
 
-**COMPENSATION & POLICIES:**
+**COMPENSATION PACKAGE:**
 - Base Salary: ₹{employee['base_salary']:,.2f} per annum
+- Performance Bonus: ₹{employee['performance_bonus']:,.2f} per annum
+- Retention Bonus: ₹{employee['retention_bonus']:,.2f} per annum
+- **Total CTC: ₹{employee['total_ctc']:,.2f} per annum**
+
+**BENEFITS & POLICIES:**
 - Leave Days: {leave_info}
 - Travel Allowance Category: {travel_info}
 
@@ -157,14 +162,18 @@ You are an expert HR professional generating a personalized job offer letter.
 
 **INSTRUCTIONS:**
 1. Create a professional, personalized offer letter
-2. Include all relevant compensation details
+2. **MUST INCLUDE detailed compensation breakdown showing:**
+   - Base Salary: ₹{employee['base_salary']:,.2f} per annum
+   - Performance Bonus: ₹{employee['performance_bonus']:,.2f} per annum  
+   - Retention Bonus: ₹{employee['retention_bonus']:,.2f} per annum
+   - **Total CTC: ₹{employee['total_ctc']:,.2f} per annum**
 3. Reference specific HR policies that apply to this employee's salary band
 4. Use formal business letter format with proper date, addresses, and signatures
 5. Ensure all financial figures are accurate and clearly stated
 6. Include relevant policy excerpts for leave, travel, and work arrangements
 7. Make it warm yet professional in tone
 8. Ensure compliance with labor laws and company policies
-9. If policy information is not available, focus on the base salary and general company policies
+9. Present the compensation package in a clear, structured format (table or bullet points)
 
 **OUTPUT FORMAT:**
 Generate a complete offer letter in proper business format, including:
@@ -172,8 +181,12 @@ Generate a complete offer letter in proper business format, including:
 - Date and addresses  
 - Formal salutation
 - Position details and reporting structure
-- Compensation breakdown
-- Policy references
+- **Detailed Compensation Package section with clear breakdown of:**
+  • Base Salary: ₹{employee['base_salary']:,.2f} per annum
+  • Performance Bonus: ₹{employee['performance_bonus']:,.2f} per annum
+  • Retention Bonus: ₹{employee['retention_bonus']:,.2f} per annum
+  • **Total CTC: ₹{employee['total_ctc']:,.2f} per annum**
+- Policy references for benefits and leave
 - Terms and conditions
 - Signature blocks
 

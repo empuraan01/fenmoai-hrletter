@@ -13,6 +13,9 @@ class Employee:
     team: str
     salary_band: str
     base_salary: float
+    performance_bonus: float
+    retention_bonus: float
+    total_ctc: float
     joining_date: str
     employee_id: str
 
@@ -43,6 +46,9 @@ class EmployeeManager:
                     team=row.get('Location', '').strip(),  # using location as team
                     salary_band=row.get('Band', '').strip(),
                     base_salary=float(row.get('Base Salary (INR)', 0)),
+                    performance_bonus=float(row.get('Performance Bonus (INR)', 0)),
+                    retention_bonus=float(row.get('Retention Bonus (INR)', 0)),
+                    total_ctc=float(row.get('Total CTC (INR)', 0)),
                     joining_date=row.get('Joining Date', '').strip(),
                     employee_id=f"EMP_{len(self.employees)+1:03d}"  # generating employee ID
                 )
@@ -247,6 +253,9 @@ class EmployeeManager:
                 'team': employee.team,
                 'salary_band': employee.salary_band,
                 'base_salary': employee.base_salary,
+                'performance_bonus': employee.performance_bonus,
+                'retention_bonus': employee.retention_bonus,
+                'total_ctc': employee.total_ctc,
                 'joining_date': employee.joining_date,
                 'employee_id': employee.employee_id
             },
